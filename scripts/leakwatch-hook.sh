@@ -74,7 +74,9 @@ if [ "$MODE" = "--claude" ] || [ "$MODE" = "--cursor" ]; then
     CMD=$(printf '%s' "$INPUT" | jq -r '.command // empty' 2>/dev/null)
   fi
   DIR=$(printf '%s' "$INPUT" | jq -r '.cwd // empty' 2>/dev/null)
-  [ -n "$DIR" ] && [ -d "$DIR" ] && cd "$DIR"
+  if [ -n "$DIR" ] && [ -d "$DIR" ]; then
+    cd "$DIR" || unavailable "cannot enter $DIR"
+  fi
 
   # `git commit`, with optional global options in between (`git -C x commit`).
   printf '%s' "$CMD" | grep -Eq \
@@ -94,16 +96,18 @@ git rev-parse --is-inside-work-tree >/dev/null 2>&1 || allow
 TMP=$(mktemp -d 2>/dev/null) || unavailable "mktemp failed"
 trap 'rm -rf "$TMP"' EXIT HUP INT TERM
 
-DIFF_OPTS="--unified=0 --no-color --no-ext-diff --no-textconv"
+# Added lines only, raw bytes: no context, colour, external diff or textconv.
+# (xargs below cannot call a function, so it repeats these flags.)
+gdiff() { git diff --unified=0 --no-color --no-ext-diff --no-textconv "$@"; }
 {
   if [ "$WIDE" = "1" ]; then
     # Everything that differs from HEAD, plus files git does not track yet
     # (an `add -A` would take them). Ignored files stay out.
-    git diff $DIFF_OPTS HEAD 2>/dev/null || git diff $DIFF_OPTS --cached
+    gdiff HEAD 2>/dev/null || gdiff --cached
     git ls-files --others --exclude-standard -z \
-      | xargs -0 -I{} git diff $DIFF_OPTS --no-index -- /dev/null {} 2>/dev/null
+      | xargs -0 -I{} git diff --unified=0 --no-color --no-ext-diff --no-textconv --no-index -- /dev/null {} 2>/dev/null
   else
-    git diff $DIFF_OPTS --cached
+    gdiff --cached
   fi
 } > "$TMP/diff"
 
