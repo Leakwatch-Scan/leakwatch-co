@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "hooks": {
+    "beforeShellExecution": [
+      { "command": "sh ci/leakwatch-hook.sh --cursor", "matcher": "git", "timeout": 30 }
+    ]
+  }
+}

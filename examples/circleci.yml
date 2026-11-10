@@ -1,0 +1,17 @@
+# .circleci/config.yml
+version: 2.1
+jobs:
+  leakwatch:
+    docker:
+      - image: cimg/base:current
+    steps:
+      - checkout
+      - run:
+          name: Scan the diff
+          command: |
+            curl -fsSL https://raw.githubusercontent.com/Leakwatch-Scan/leakwatch-ci/v1/scripts/leakwatch.sh -o leakwatch.sh
+            sh leakwatch.sh origin/main
+workflows:
+  scan:
+    jobs:
+      - leakwatch

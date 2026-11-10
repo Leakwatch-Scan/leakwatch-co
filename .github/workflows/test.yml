@@ -1,0 +1,24 @@
+name: Test
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: ShellCheck
+        run: shellcheck -s sh scripts/*.sh
+      - name: Hook lets a commit through when no key is set
+        run: |
+          git init -q /tmp/t && cd /tmp/t
+          echo hello > a.txt && git add a.txt
+          env -u LEAKWATCH_API_KEY sh "$GITHUB_WORKSPACE/scripts/leakwatch-hook.sh"
+      - name: Hook blocks in strict mode when no key is set
+        run: |
+          cd /tmp/t
+          if env -u LEAKWATCH_API_KEY LEAKWATCH_STRICT=1 sh "$GITHUB_WORKSPACE/scripts/leakwatch-hook.sh"; then
+            echo "expected a refusal" >&2; exit 1
+          fi

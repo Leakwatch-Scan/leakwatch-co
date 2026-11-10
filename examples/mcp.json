@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "leakwatch": {
+      "url": "https://leakwatch.net/api/v1/mcp",
+      "headers": { "Authorization": "Bearer ${env:LEAKWATCH_API_KEY}" }
+    }
+  }
+}

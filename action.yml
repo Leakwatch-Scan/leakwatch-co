@@ -1,0 +1,43 @@
+name: "LeakWatch secret scan"
+description: "Fail the build when the incoming diff contains an API key or secret. One HTTPS call, nothing to install."
+author: "LeakWatch"
+branding:
+  icon: "shield"
+  color: "blue"
+
+inputs:
+  api-key:
+    description: "LeakWatch API key (create one in your dashboard). Pass it from a repository secret."
+    required: true
+  base:
+    description: "Ref or SHA to diff against. Defaults to the pull request base, or the commit before the push."
+    required: false
+    default: ""
+  api-url:
+    description: "Override the scan endpoint (self-hosted LeakWatch)."
+    required: false
+    default: "https://leakwatch.net/api/v1/scan/content"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Scan the diff
+      shell: sh
+      env:
+        LEAKWATCH_API_KEY: ${{ inputs.api-key }}
+        LEAKWATCH_API: ${{ inputs.api-url }}
+        INPUT_BASE: ${{ inputs.base }}
+        PR_BASE_REF: ${{ github.base_ref }}
+        PUSH_BEFORE: ${{ github.event.before }}
+        DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+      run: |
+        if [ -n "$INPUT_BASE" ]; then
+          BASE=$INPUT_BASE
+        elif [ -n "$PR_BASE_REF" ]; then
+          BASE="origin/$PR_BASE_REF"
+        elif [ -n "$PUSH_BEFORE" ] && [ "$PUSH_BEFORE" != "0000000000000000000000000000000000000000" ]; then
+          BASE=$PUSH_BEFORE
+        else
+          BASE="origin/${DEFAULT_BRANCH:-main}"
+        fi
+        sh "$GITHUB_ACTION_PATH/scripts/leakwatch.sh" "$BASE"

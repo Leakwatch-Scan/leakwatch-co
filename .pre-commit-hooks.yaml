@@ -1,0 +1,8 @@
+- id: leakwatch
+  name: LeakWatch secret scan
+  description: Refuses a commit whose added lines contain a secret (needs LEAKWATCH_API_KEY, curl, jq).
+  entry: scripts/leakwatch-hook.sh
+  language: script
+  pass_filenames: false
+  always_run: true
+  stages: [pre-commit]

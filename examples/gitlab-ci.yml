@@ -1,0 +1,12 @@
+# .gitlab-ci.yml
+leakwatch:
+  image: alpine:3
+  variables:
+    GIT_DEPTH: 0
+  before_script:
+    - apk add --no-cache curl jq git
+    - curl -fsSL https://raw.githubusercontent.com/Leakwatch-Scan/leakwatch-ci/v1/scripts/leakwatch.sh -o leakwatch.sh
+  script:
+    - sh leakwatch.sh "origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"

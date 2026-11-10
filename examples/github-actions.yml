@@ -1,0 +1,14 @@
+# .github/workflows/leakwatch.yml
+name: Secret scan
+on: pull_request
+
+jobs:
+  leakwatch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # the diff needs the base commit
+      - uses: Leakwatch-Scan/leakwatch-ci@v1
+        with:
+          api-key: ${{ secrets.LEAKWATCH_API_KEY }}
